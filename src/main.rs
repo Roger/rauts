@@ -90,9 +90,10 @@ impl Router {
     fn route<F, Args: 'static>(mut self, route: &str, handler: F) -> Self
     where
         F: IntoHandler<F, Args> + 'static,
-        ConcreteHandler<F, Args>: Handler
+        ConcreteHandler<F, Args>: Handler,
     {
-        self.routes.insert(route.into(), Box::new(handler.into_handler()));
+        self.routes
+            .insert(route.into(), Box::new(handler.into_handler()));
         self
     }
 
@@ -100,6 +101,30 @@ impl Router {
         let handler = self.routes.get(route).unwrap();
         handler.call(args);
     }
+}
+
+struct Json<T>(T);
+
+impl<T> FromRequest for Json<T>
+where
+    T: serde::de::DeserializeOwned,
+{
+    fn from_request(req: &Request) -> Self
+    where
+        Self: Sized,
+    {
+        Json(serde_json::from_str(&req.0).unwrap())
+    }
+}
+
+#[derive(serde::Deserialize)]
+struct MyJson {
+    f_string: String,
+    f_f32: f32,
+}
+
+fn test_json(Json(my_json): Json<MyJson>) {
+    println!("s: {:?}, f32: {:?}", my_json.f_string, my_json.f_f32);
 }
 
 fn test_mix(a: usize, b: String, c: f32) {
@@ -119,9 +144,19 @@ fn main() {
     let router = Router::new()
         .route("test_usize", test_usize)
         .route("test_string", test_string)
-        .route("test_mix", test_mix);
+        .route("test_mix", test_mix)
+        .route("test_json", test_json);
 
     router.call("test_usize", &request);
     router.call("test_string", &request);
     router.call("test_mix", &request);
+
+    let request = Request(
+        r#"{
+            "f_string": "the cake is a lie",
+            "f_f32": 42.0
+        }"#
+        .into(),
+    );
+    router.call("test_json", &request);
 }
