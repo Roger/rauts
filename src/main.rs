@@ -87,11 +87,12 @@ impl Router {
         }
     }
 
-    fn route<F>(mut self, route: &str, handler: F) -> Self
+    fn route<F, Args: 'static>(mut self, route: &str, handler: F) -> Self
     where
-        F: Handler + 'static,
+        F: IntoHandler<F, Args> + 'static,
+        ConcreteHandler<F, Args>: Handler
     {
-        self.routes.insert(route.into(), Box::new(handler));
+        self.routes.insert(route.into(), Box::new(handler.into_handler()));
         self
     }
 
@@ -116,9 +117,9 @@ fn test_string(a: String) {
 fn main() {
     let request = Request("42".into());
     let router = Router::new()
-        .route("test_usize", test_usize.into_handler())
-        .route("test_string", test_string.into_handler())
-        .route("test_mix", test_mix.into_handler());
+        .route("test_usize", test_usize)
+        .route("test_string", test_string)
+        .route("test_mix", test_mix);
 
     router.call("test_usize", &request);
     router.call("test_string", &request);
