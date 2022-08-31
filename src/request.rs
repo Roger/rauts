@@ -1,37 +1,63 @@
+use ocpp::call::Payload;
+use ocpp::Message;
+use ocpp::v16::authorize::Authorize;
+
+#[derive(Debug, Clone)]
+pub struct TPBE;
+#[derive(Debug, Clone)]
+pub struct CGW;
+#[derive(Debug, Clone)]
+pub struct Charger;
+
+#[derive(Debug, Clone)]
+pub enum Source {
+    TPBE,
+    CGW,
+    Charger,
+}
+
+impl FromRequest for Source {
+    fn from_request(req: &Request) -> Self
+    where
+        Self: Sized,
+    {
+        req.1.clone()
+    }
+}
+
+pub struct Call<T, S>(pub T, pub S);
+
+impl FromRequest for Call<Authorize, TPBE> {
+    fn from_request(req: &Request) -> Self {
+        match &req.0 {
+            Message::Call(call) => match &call.payload {
+                Payload::Authorize(authorize) => Call(authorize.clone(), TPBE),
+                _ => panic!("Must be type"),
+            },
+            _ => panic!("Must be a call!"),
+        }
+    }
+}
+
+impl FromRequest for Call<Authorize, CGW> {
+    fn from_request(req: &Request) -> Self {
+        match &req.0 {
+            Message::Call(call) => match &call.payload {
+                Payload::Authorize(authorize) => Call(authorize.clone(), CGW),
+                _ => panic!("This route shouldn't be possible"),
+            },
+            _ => panic!("This route shouldn't be possible"),
+        }
+    }
+}
+
 #[derive(Debug)]
-pub struct Request(pub String);
+pub struct Request(pub ocpp::Message, pub Source);
 
 pub trait FromRequest {
     fn from_request(req: &Request) -> Self
     where
         Self: Sized;
-}
-
-impl FromRequest for usize {
-    fn from_request(req: &Request) -> Self
-    where
-        Self: Sized,
-    {
-        req.0.parse().unwrap()
-    }
-}
-
-impl FromRequest for f32 {
-    fn from_request(req: &Request) -> Self
-    where
-        Self: Sized,
-    {
-        req.0.parse().unwrap()
-    }
-}
-
-impl FromRequest for String {
-    fn from_request(req: &Request) -> Self
-    where
-        Self: Sized,
-    {
-        req.0.clone()
-    }
 }
 
 macro_rules! factory_tuple ({ $($param:ident)* } => {

@@ -8,3 +8,4 @@ edition = "2021"
 [dependencies]
 serde = { version = "1.0.144", features = ["derive"] }
 serde_json = "1.0.85"
+ocpp = { "git" = "ssh://git@github.com/mobilityhouse/rocpp.git", "branch" = "master" }

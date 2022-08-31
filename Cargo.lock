@@ -9,6 +9,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6c8af84674fe1f223a982c933a0ee1086ac4d4052aa0fb8060c12c6ad838e754"
 
 [[package]]
+name = "ocpp"
+version = "0.1.1"
+source = "git+ssh://git@github.com/mobilityhouse/rocpp.git?branch=master#c4c439c7456eba4198c9d6ff290dad212505f1e7"
+dependencies = [
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "proc-macro2"
 version = "1.0.43"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -30,6 +39,7 @@ dependencies = [
 name = "rauts"
 version = "0.1.0"
 dependencies = [
+ "ocpp",
  "serde",
  "serde_json",
 ]
