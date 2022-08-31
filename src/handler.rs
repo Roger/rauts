@@ -1,6 +1,6 @@
-use std::marker::PhantomData;
+use std::{any::TypeId, marker::PhantomData};
 
-use crate::request::{Request, FromRequest};
+use crate::request::{FromRequest, Request};
 
 pub struct ConcreteHandler<F, Args> {
     func: F,
@@ -13,16 +13,20 @@ pub trait IntoHandler<F, Args> {
 
 pub trait Handler {
     fn call(&self, args: &Request); // -> Self::Output;
+    fn routing_key(&self) -> TypeId;
 }
 
 macro_rules! factory_tuple_handler ({ $($param:ident)* } => {
-    impl<Func, $($param:FromRequest,)*> Handler for ConcreteHandler<Func, ($($param,)*)>
+    impl<Func, $($param:FromRequest +'static,)*> Handler for ConcreteHandler<Func, ($($param,)*)>
     where
         Func: Fn($( $param, )*),
     {
         #[allow(unused_variables)]
         fn call(&self, request: &Request) {
             (self.func)($( $param::from_request(request), )*);
+        }
+        fn routing_key(&self) -> TypeId {
+            TypeId::of::<($( $param, )*)>()
         }
     }
 });

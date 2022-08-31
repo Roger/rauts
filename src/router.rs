@@ -1,12 +1,11 @@
 use std::any::TypeId;
 use std::collections::HashMap;
 
-use ocpp::call::Payload;
-use ocpp::Message;
-use ocpp::v16::authorize::Authorize;
+use crate::handler::Handler;
 use crate::request::*;
-use crate::handler::{Handler, IntoHandler, ConcreteHandler};
-
+use ocpp::call::Payload;
+use ocpp::v16::authorize::Authorize;
+use ocpp::Message;
 
 pub struct Router {
     routes: HashMap<TypeId, Box<dyn Handler>>,
@@ -19,17 +18,15 @@ impl Router {
         }
     }
 
-    pub fn route<F, Args: 'static>(mut self, handler: F) -> Self
+    pub fn route<H: Handler + 'static>(mut self, handler: H) -> Self
     where
-        F: IntoHandler<F, Args> + 'static,
-        ConcreteHandler<F, Args>: Handler,
+        H: Handler,
     {
-        let type_id = TypeId::of::<Args>();
-        if self.routes.contains_key(&type_id) {
+        let routing_key = handler.routing_key();
+        if self.routes.contains_key(&routing_key) {
             panic!("Route already exists");
         }
-        self.routes
-            .insert(type_id, Box::new(handler.into_handler()));
+        self.routes.insert(routing_key, Box::new(handler));
         self
     }
 

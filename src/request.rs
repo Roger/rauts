@@ -18,8 +18,6 @@ pub enum Source {
 
 impl FromRequest for Source {
     fn from_request(req: &Request) -> Self
-    where
-        Self: Sized,
     {
         req.1.clone()
     }
@@ -55,9 +53,7 @@ impl FromRequest for Call<Authorize, CGW> {
 pub struct Request(pub ocpp::Message, pub Source);
 
 pub trait FromRequest {
-    fn from_request(req: &Request) -> Self
-    where
-        Self: Sized;
+    fn from_request(req: &Request) -> Self;
 }
 
 macro_rules! factory_tuple ({ $($param:ident)* } => {
@@ -67,8 +63,6 @@ macro_rules! factory_tuple ({ $($param:ident)* } => {
 
         #[allow(unused_variables, non_snake_case)]
         fn from_request(req: &Request) -> Self
-        where
-            Self: Sized,
         {
             $( let $param = $param::from_request(req); )*
             ($($param,)*)
